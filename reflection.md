@@ -1,27 +1,21 @@
-<!-- DRAFT written from the build session. Rewrite it in your own words and fill in the [bracketed] parts before submitting. -->
-
 # Reflection
 
-## What I built
+## What We built
 
-For Module 5 I built an interactive site about the **two faces of compression**. The same algorithm (LZ77 / DEFLATE) that makes files smaller causes two very different attacks: the **CRIME/BREACH** compression-oracle side channel, where the *size* of compressed output leaks a secret, and **zip bombs**, where a tiny file expands into petabytes. I picked this because it connects both halves of the module — side channels *and* algorithmic complexity — through one idea: compressed size depends on content.
+For Module 5 we built an interactive page that explains what a compressor does to start out, and then how you can exploit the cool, but potentially vulnerable compression feature can do. This page shows how compressed requests and files can be used to abstract important information. It also shows how ZIP bombs can get out of control with an algorithmic-complexity. Then, it closes with different methods to combat these common exploits, a time line, and a short quiz.
 
 ## How it deepened my understanding
 
-The CRIME lab is what made it click for me. In class, "compression leaks information" sounded abstract. Building a lab where I actually recover a secret by always picking the character that compresses smallest made the mechanism concrete: when my guessed text matches the hidden cookie, LZ77 merges the two copies into one back-reference and the size drops by one. I never decrypt anything — I read the answer off the *lengths*. Writing the model also taught me why the real attacks need padding and the "two-tries" trick: my greedy version fails when two characters tie on size, which I turned into one of the unit tests.
-
-The zip-bomb side reframed "denial of service" for me. I had thought of DoS as flooding with traffic, but a decompression bomb is the opposite — one small, cheap request that does disproportionate damage (the asymmetric effort-vs-effect idea from the slides). Modeling 42.zip (42 KB → 4.5 PB) and David Fifield's non-recursive bomb (over 28,000,000:1) next to a *guarded extractor* showed me the real lesson: you can't reliably "detect" a bomb, so the defense is to never trust a declared size and to cap output and ratio.
-
-The defenses stage tied both together. CRIME and zip bombs have the same root, so the fixes rhyme: break the correlation between the secret and the observable (disable compression, separate the secret, randomize/mask), or refuse to do unbounded work on untrusted input. [Add one sentence about which part surprised you most.]
+We liked the interactivity of the page. Before doing this project (and learning in class), we had a good idea of how compression worked and what ZIP bombs do. Stage 1 deepened my understanding of how you can use the size of a compressed request to guess the cookie token by choosing the character that makes the request the smallest. Although we knew about ZIP files, it was also interesting to learn about the Non-recursive ZIP files and the Nested, 42.zip style of the files and how changing certain values can lead to a crazy decompression size compared to the compressed size. Also, we learned more about the ways to shut the attacks down by disabling compression or separating the secret. We thought it was helpful to use the same format introduced earlier to show not only how those two methods work, but defend against an attack by making all of the potential cookie token candidates have the same size when entered so guessing them will not show an attacker anything. Then, we learned how good extractors check the expansion ratio and the max output a compressed file after every little extraction to make sure it doesn't write out a enormous amount of bytes. It ends with some references, a timeline which can be helpful. Lastly, we tested our learning with a quiz.
 
 ## Workflow
 
-1. **Research first, with citations.** I read about each attack and pinned down primary sources — Kelsey (FSE 2002), CRIME (CVE-2012-4929), BREACH (Black Hat 2013), Fifield (USENIX WOOT 2019), the LZ77 paper, RFC 7541, and CWE-409 — so the timeline and claims are backed by real references, not just the slides.
-2. **Model first, UI second.** All the logic lives in three small files (`src/sim/lz77.ts`, `crime.ts`, `bombs.ts`) with unit tests that check the page's claims *before* any UI existed — e.g. the correct guess is always among the smallest probes, and the guarded extractor aborts a 42.zip-scale bomb after a sliver of output. Testing the logic first caught a tie-handling issue early.
-3. **Safe by construction.** I kept it a pure simulation: a random in-browser secret, a toy compressor, and bomb *math* only — the page never generates an archive or touches a real server. [Note anything you double-checked here.]
-4. **AI-assisted development.** I used Claude Code to scaffold the Vite + React + TypeScript project and write the components, describing the labs and interactivity I wanted. I verified the result by running the test suite (all passing) and a strict type-checked production build.
-5. **Review.** I went through each lab and checked it against the sources — especially the dates and ratios in the timeline and the 42.zip / Fifield figures. [Describe anything you changed or pushed back on.]
+1. We wanted to focus on more research first so we prompted Claude to find good papers/articles that were related to this topic that would be the reference for this site. We checked them and then used that information to build the page with Claude Code.
+2. All the logic lives in three small files (`src/sim/lz77.ts`, `crime.ts`, `bombs.ts`) with unit tests that check the page's claims.
+3. We did not have any real backend, we just made simulations that mimicked an actual attack on a server or on a computer .
+4. We used Claude Code to scaffold the Vite + React + TypeScript project and write the components, describing the labs and interactivity I wanted.
+5. For review, we went through each part and checked it based on the sources cited in the page. I also have tests run automatically for the page itself.
 
 ## Takeaway
 
-A feature and a vulnerability can be the same line of code seen from two directions. Compression is useful *because* output size depends on content — and that exact property is what leaks secrets and what lets a bomb explode. Good defenses don't fight the feature; they cut the link between what an attacker can observe (or submit) and the work the system is willing to do.
+We have to be careful with compressed files. We are only going to extract them from trusted sources and use good extractors that do not have a naive approach. We also learned something interesting about using compression to guess the cookie token. When making systems in the future, we are going to be careful when it comes to compressed requests and with handling compressed files within our app to protect users.
