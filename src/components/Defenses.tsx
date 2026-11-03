@@ -141,16 +141,22 @@ function BombDefense() {
 
   return (
     <div className="lab defense-lab">
-      <h3 className="defense-title">🛡️ Defend the extractor (Stage 3)</h3>
+      <h3 className="defense-title">🛡️ Defend against the Stage 3 zip bomb</h3>
       <p className="defense-blurb">
-        A guarded, streaming extractor checks running totals and bails out early — it never trusts the archive’s
-        declared size. Feed it a 42.zip-scale bomb ({fmtBytes(bomb.unpacked)} if fully extracted) and set the limits.
+        Picture a server that accepts uploaded <code>.zip</code> files and unpacks them — a virus scanner, an email
+        gateway, a photo-upload handler. The code that does the unpacking is the <b>extractor</b>. A <b>naive</b>{' '}
+        extractor trusts the archive and writes out every byte, so the 42.zip-scale bomb below balloons to{' '}
+        <b>{fmtBytes(bomb.unpacked)}</b> and takes the server down.
+      </p>
+      <p className="defense-blurb">
+        A <b>guarded</b> extractor unpacks a little at a time and watches two running numbers. Set the limits with the
+        sliders and see how fast it gives up.
       </p>
 
       <div className="sliders">
         <label className="slider">
           <span className="slider-label">
-            Max output before abort<b>{fmtBytes(maxOutMB * 1024 * 1024)}</b>
+            Max output before giving up<b>{fmtBytes(maxOutMB * 1024 * 1024)}</b>
           </span>
           <input
             type="range"
@@ -160,6 +166,10 @@ function BombDefense() {
             value={maxOutMB}
             onChange={(e) => setMaxOutMB(Number(e.target.value))}
           />
+          <span className="slider-help">
+            Total unpacked size you’ll allow before you stop. A real upload isn’t this big, so anything larger is
+            almost certainly an attack.
+          </span>
         </label>
         <label className="slider">
           <span className="slider-label">
@@ -173,29 +183,43 @@ function BombDefense() {
             value={maxRatio}
             onChange={(e) => setMaxRatio(Number(e.target.value))}
           />
+          <span className="slider-help">
+            How many times bigger the output may get than the file on disk. Ordinary files grow maybe 3–10×; a bomb
+            grows thousands of times.
+          </span>
         </label>
       </div>
 
       <div className="extractor">
-        <Bar
-          frac={result.fractionExtracted}
-          tone={result.aborted ? 'green' : 'red'}
-          label={
-            result.aborted
-              ? `aborted after ${fmtBytes(result.bytesWritten)} (${(result.fractionExtracted * 100).toExponential(1)}% of the bomb)`
-              : `wrote the whole thing: ${fmtBytes(result.bytesWritten)}`
-          }
-        />
+        <div className="extractor-row">
+          <span className="extractor-tag bad">Naive extractor</span>
+          <Bar frac={1} tone="red" label={`writes the full ${fmtBytes(bomb.unpacked)} — server down`} />
+        </div>
+        <div className="extractor-row">
+          <span className="extractor-tag good">Your guarded extractor</span>
+          <Bar
+            frac={Math.min(1, result.bytesWritten / (maxOutMB * 1024 * 1024))}
+            tone={result.aborted ? 'green' : 'red'}
+            label={
+              result.aborted
+                ? `stopped after ${fmtBytes(result.bytesWritten)}`
+                : `wrote the whole thing: ${fmtBytes(result.bytesWritten)}`
+            }
+          />
+        </div>
       </div>
 
       {result.aborted ? (
         <Callout tone="win">
-          <b>Bomb defused.</b> The extractor stopped because {result.reason}. Only a sliver of the payload ever
-          touched the disk.
+          <b>Bomb defused.</b> Your extractor stopped because {result.reason}, so it wrote only{' '}
+          <b>{fmtBytes(result.bytesWritten)}</b> — next to nothing against the {fmtBytes(bomb.unpacked)} the bomb
+          wanted. The server stays up, and notice it never needed to “recognize” a bomb: it just refused to do
+          unbounded work.
         </Callout>
       ) : (
         <Callout tone="warn">
-          <b>No limit hit.</b> With these settings the extractor would keep going — crank the caps down to stop it.
+          <b>No limit hit.</b> With these caps your extractor would keep going and unpack the whole bomb. Slide the
+          limits down until it stops.
         </Callout>
       )}
     </div>

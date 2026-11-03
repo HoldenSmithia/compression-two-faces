@@ -544,6 +544,7 @@ h2 {
   accent-color: var(--green);
 }
 .slider-aside { margin: 2px 0 0; }
+.slider-help { font-size: 0.8rem; color: var(--muted); line-height: 1.5; }
 
 .bomb-readout {
   background: var(--bg-2);
@@ -595,7 +596,20 @@ h2 {
 .defense-title { margin: 0 0 14px; font-size: 1.1rem; }
 .defense-blurb { color: var(--muted); font-size: 0.9rem; margin: 0 0 16px; }
 .defense-grid { grid-template-columns: repeat(auto-fill, minmax(135px, 1fr)); }
-.extractor { margin: 8px 0 16px; }
+.extractor { display: flex; flex-direction: column; gap: 10px; margin: 8px 0 16px; }
+.extractor-row { display: grid; grid-template-columns: 170px 1fr; gap: 12px; align-items: center; }
+.extractor-tag {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  text-align: center;
+}
+.extractor-tag.bad { color: var(--red); background: rgba(255, 83, 112, 0.12); }
+.extractor-tag.good { color: var(--green); background: rgba(53, 240, 160, 0.12); }
+@media (max-width: 860px) {
+  .extractor-row { grid-template-columns: 1fr; gap: 6px; }
+}
 
 /* ---------- Timeline ---------- */
 
